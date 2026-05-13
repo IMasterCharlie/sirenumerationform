@@ -31,7 +31,7 @@ export const FormBuilder = ({ data, onChange, onPreview }: FormBuilderProps) => 
   const validateStep = (s: number): boolean => {
     switch (s) {
       case 1:
-        if (!data.dob || !data.mobileNo || !data.fatherName) {
+        if (!data.dob || !data.mobileNo || !data.fatherName || !data.address) {
           setError('Please fill all required fields in Section A.');
           return false;
         }
@@ -107,6 +107,7 @@ export const FormBuilder = ({ data, onChange, onPreview }: FormBuilderProps) => 
                 <h3 className="text-xs font-bold uppercase tracking-widest text-natural-text">Personal Details (Section A)</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                <FormInput label="Address" placeholder="ENTER FULL ADDRESS" value={data.address} onValueChange={updateField('address')} required />
                 <FormInput label="Date of Birth" type="date" value={data.dob} onValueChange={updateField('dob')} required />
                 <FormInput label="Aadhaar No. (Optional)" placeholder="ENTER 12 DIGIT AADHAAR" value={data.aadhaarNo} onValueChange={updateField('aadhaarNo')} maxLength={12} />
                 <FormInput label="Mobile No." placeholder="ENTER 10 DIGIT MOBILE NO" value={data.mobileNo} onValueChange={updateField('mobileNo')} maxLength={10} required />

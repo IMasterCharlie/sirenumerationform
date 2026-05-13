@@ -3,14 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef } from 'react';
-import { initialFormData, FormData } from './types';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { initialFormData, FormData, SavedForm } from './types';
 import { FormBuilder } from './components/FormBuilder';
 import { FormPreview } from './components/FormPreview';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { FileDown, Edit3, ArrowLeft, Printer } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { loadSavedForms, saveForm } from './lib/formStorage';
 
 import { Hero } from './components/Hero';
 
@@ -20,10 +21,44 @@ export default function App() {
   const [data, setData] = useState<FormData>(initialFormData);
   const [view, setView] = useState<ViewMode>('landing');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [currentFormId, setCurrentFormId] = useState<string | null>(null);
+  const [savedForms, setSavedForms] = useState<SavedForm[]>([]);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Load saved forms on mount and when returning to landing
+  const refreshSavedForms = useCallback(() => {
+    setSavedForms(loadSavedForms());
+  }, []);
+
+  useEffect(() => {
+    refreshSavedForms();
+  }, [refreshSavedForms]);
 
   const handleDataChange = (newData: Partial<FormData>) => {
     setData(prev => ({ ...prev, ...newData }));
+  };
+
+  // Auto-save when going to preview
+  const handlePreview = () => {
+    const id = saveForm(data, currentFormId || undefined);
+    setCurrentFormId(id);
+    setView('preview');
+    refreshSavedForms();
+  };
+
+  // Load a saved form from history
+  const handleLoadForm = (form: SavedForm) => {
+    setData(form.data);
+    setCurrentFormId(form.id);
+    setView('filling');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Start a fresh new form
+  const handleStartNew = () => {
+    setData(initialFormData);
+    setCurrentFormId(null);
+    setView('filling');
   };
 
   const handleDownloadPDF = async () => {
@@ -64,8 +99,30 @@ export default function App() {
   };
 
   const toggleView = () => {
-    setView(prev => prev === 'filling' ? 'preview' : 'filling');
+    if (view === 'preview') {
+      setView('filling');
+    } else {
+      // Save before switching to preview
+      const id = saveForm(data, currentFormId || undefined);
+      setCurrentFormId(id);
+      setView('preview');
+      refreshSavedForms();
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleGoHome = () => {
+    // Auto-save current form progress if there's data entered
+    const hasData = data.fatherName || data.bElectorName || data.address || data.mobileNo;
+    if (hasData) {
+      const id = saveForm(data, currentFormId || undefined);
+      setCurrentFormId(id);
+    }
+    refreshSavedForms();
+    setView('landing');
+    // Reset for next time
+    setData(initialFormData);
+    setCurrentFormId(null);
   };
 
   return (
@@ -73,7 +130,7 @@ export default function App() {
       {/* Navigation Header */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-natural-border px-6 py-3">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('landing')}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => { if (view !== 'landing') handleGoHome(); }}>
             <div className="bg-natural-accent p-1.5 rounded text-white">
               <ClipboardList className="w-4 h-4" />
             </div>
@@ -85,7 +142,7 @@ export default function App() {
           <div className="flex gap-3">
             {view === 'filling' && (
               <button
-                onClick={() => setView('landing')}
+                onClick={handleGoHome}
                 className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-natural-muted hover:text-natural-text transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -128,14 +185,19 @@ export default function App() {
         <AnimatePresence mode="wait">
           {view === 'landing' ? (
             <div key="landing">
-              <Hero onStart={() => setView('filling')} />
+              <Hero
+                onStart={handleStartNew}
+                savedForms={savedForms}
+                onLoadForm={handleLoadForm}
+                onRefreshForms={refreshSavedForms}
+              />
             </div>
           ) : view === 'filling' ? (
             <div key="filling">
               <FormBuilder 
                 data={data} 
                 onChange={handleDataChange} 
-                onPreview={() => setView('preview')} 
+                onPreview={handlePreview} 
               />
             </div>
           ) : (

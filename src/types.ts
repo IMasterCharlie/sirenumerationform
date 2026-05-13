@@ -4,6 +4,7 @@ export interface FormData {
   serialPartPre: string;
   
   // Table A
+  address: string;
   dob: string; // YYYY-MM-DD format
   aadhaarNo: string;
   mobileNo: string;
@@ -47,6 +48,7 @@ export interface FormData {
 export const initialFormData: FormData = {
   electorInfoPre: '',
   serialPartPre: '',
+  address: '',
   dob: '',
   aadhaarNo: '',
   mobileNo: '',
@@ -80,3 +82,11 @@ export const initialFormData: FormData = {
   electorRelationship: '',
   date: '',
 };
+
+export interface SavedForm {
+  id: string;
+  name: string;
+  data: FormData;
+  createdAt: string;
+  updatedAt: string;
+}

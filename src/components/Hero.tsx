@@ -1,12 +1,17 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { ClipboardList, ShieldCheck, FileText, Download } from 'lucide-react';
+import { SavedForm } from '@/src/types';
+import { FormHistory } from './FormHistory';
 
 interface HeroProps {
   onStart: () => void;
+  savedForms: SavedForm[];
+  onLoadForm: (form: SavedForm) => void;
+  onRefreshForms: () => void;
 }
 
-export const Hero = ({ onStart }: HeroProps) => {
+export const Hero = ({ onStart, savedForms, onLoadForm, onRefreshForms }: HeroProps) => {
   return (
     <div className="relative overflow-hidden bg-white py-12 md:py-24 border-b border-natural-border">
       {/* Background Pattern */}
@@ -59,9 +64,20 @@ export const Hero = ({ onStart }: HeroProps) => {
               className="px-10 py-4 bg-natural-accent hover:bg-natural-accent-hover text-white rounded text-xs font-bold uppercase tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95 flex items-center gap-3"
             >
               <ClipboardList className="w-5 h-5" />
-              Start Processing Form
+              Start New Form
             </button>
           </motion.div>
+
+          {/* Saved Forms History */}
+          {savedForms.length > 0 && (
+            <div className="w-full pt-8 border-t border-natural-border mt-8">
+              <FormHistory
+                forms={savedForms}
+                onLoad={onLoadForm}
+                onRefresh={onRefreshForms}
+              />
+            </div>
+          )}
 
           {/* Features */}
           <motion.div
