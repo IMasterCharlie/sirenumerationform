@@ -1,7 +1,10 @@
 export interface FormData {
-  // Header Table
-  electorInfoPre: string;
-  serialPartPre: string;
+  // Header / Elector Identification
+  electorName: string;
+  epicNumber: string;
+  acNo: string;
+  partNo: string;
+  srNo: string;
   
   // Table A
   address: string;
@@ -46,8 +49,11 @@ export interface FormData {
 }
 
 export const initialFormData: FormData = {
-  electorInfoPre: '',
-  serialPartPre: '',
+  electorName: '',
+  epicNumber: '',
+  acNo: '',
+  partNo: '',
+  srNo: '',
   address: '',
   dob: '',
   aadhaarNo: '',

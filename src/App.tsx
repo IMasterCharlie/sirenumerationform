@@ -7,8 +7,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { initialFormData, FormData, SavedForm } from './types';
 import { FormBuilder } from './components/FormBuilder';
 import { FormPreview } from './components/FormPreview';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import { FileDown, Edit3, ArrowLeft, Printer } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { loadSavedForms, saveForm } from './lib/formStorage';
@@ -64,32 +62,97 @@ export default function App() {
   const handleDownloadPDF = async () => {
     if (!previewRef.current) return;
     setIsGenerating(true);
-    
+
     try {
-      // Use higher scale for better quality on canvas
-      const canvas = await html2canvas(previewRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      
-      // Use applicant name for filename
-      const filename = `${data.bElectorName || data.electorSignatureName || 'Enumeration_Form'}.pdf`;
-      pdf.save(filename);
+      const element = previewRef.current;
+
+      // Collect all stylesheets from the current page
+      const styleSheets = Array.from(document.styleSheets);
+      let cssText = '';
+      for (const sheet of styleSheets) {
+        try {
+          const rules = Array.from(sheet.cssRules || []);
+          cssText += rules.map(rule => rule.cssText).join('\n');
+        } catch {
+          // Skip cross-origin sheets — they can't be read
+          if (sheet.href) {
+            cssText += `@import url("${sheet.href}");\n`;
+          }
+        }
+      }
+
+      // Create a hidden iframe for printing
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '-9999px';
+      iframe.style.bottom = '-9999px';
+      iframe.style.width = '210mm';
+      iframe.style.height = '297mm';
+      iframe.style.border = 'none';
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) throw new Error('Could not access iframe document');
+
+      // Write the form content into the iframe with all styles
+      iframeDoc.open();
+      iframeDoc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>${data.electorName || 'Enumeration Form'}</title>
+            <style>
+              ${cssText}
+              @page {
+                size: A4 portrait;
+                margin: 0;
+              }
+              html, body {
+                margin: 0;
+                padding: 0;
+                width: 210mm;
+                min-height: 297mm;
+                background: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              #print-root {
+                width: 210mm;
+                min-height: 297mm;
+              }
+              /* Remove screen-only styles */
+              #print-root > div {
+                border: none !important;
+                box-shadow: none !important;
+              }
+            </style>
+          </head>
+          <body>
+            <div id="print-root">${element.outerHTML}</div>
+          </body>
+        </html>
+      `);
+      iframeDoc.close();
+
+      // Wait for styles & fonts to load
+      await new Promise(r => setTimeout(r, 500));
+
+      // Temporarily set the main page title so the browser uses it as PDF filename
+      const originalTitle = document.title;
+      document.title = data.electorName || 'Enumeration Form';
+
+      // Trigger browser print dialog (user can save as PDF)
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+
+      // Restore original title
+      document.title = originalTitle;
+
+      // Clean up the iframe after a delay
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
     } catch (error) {
       console.error('PDF generation failed:', error);
       alert('FAILED TO GENERATE PDF. PLEASE TRY AGAIN.');

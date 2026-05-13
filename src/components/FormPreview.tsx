@@ -22,7 +22,7 @@ export const FormPreview = forwardRef<HTMLDivElement, FormPreviewProps>(({ data 
   return (
     <div
       ref={ref}
-      className="bg-white p-[45px] w-[210mm] min-h-[297mm] mx-auto text-[13px] font-sans leading-tight border border-[#e5e7eb] shadow-none print:shadow-none print:border-none uppercase text-black"
+      className="bg-white p-[45px] w-[210mm] min-h-[297mm] mx-auto text-[13px] font-sans leading-tight border border-[#e5e7eb] shadow-none print:shadow-none print:border-none uppercase text-black flex flex-col"
       id="form-to-print"
       style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
     >
@@ -43,16 +43,17 @@ export const FormPreview = forwardRef<HTMLDivElement, FormPreviewProps>(({ data 
           <tr>
             {/* Split Column - Top */}
             <td className="border border-black pb-5 pt-1 w-[25%] align-middle text-left leading-tight">
-              <span className="font-semibold text-xs">Elector’s Name : </span>
+              <span className="font-semibold text-xs">Elector's Name : </span>
+              <span className="text-[18px]">{data.electorName}</span>
             </td>
 
             {/* All these cells span 2 rows vertically */}
             <td rowSpan={2} className="border border-black px-2 py-4 w-[20%] align-middle text-left leading-tight">
               {/* Changed space-y-1 to space-y-4 */}
               <div className="space-y-4">
-                <p>AC No. : </p>
-                <p>Part No. : </p>
-                <p>Sr No. : </p>
+                <p>AC No. : <span className="text-[18px]">{data.acNo}</span></p>
+                <p>Part No. : <span className="text-[18px]">{data.partNo}</span></p>
+                <p>Sr No. : <span className="text-[18px]">{data.srNo}</span></p>
               </div>
             </td>
 
@@ -74,6 +75,7 @@ export const FormPreview = forwardRef<HTMLDivElement, FormPreviewProps>(({ data 
             {/* Split Column - Bottom */}
             <td className="border border-black pb-5 pt-1 w-[25%] align-middle text-left leading-tight">
               <span className="font-semibold text-xs">EPIC Number : </span>
+              <span className="text-[18px]">{data.epicNumber}</span>
             </td>
             {/* The rowSpan={2} cells from the first row automatically fill the rest of this row */}
           </tr>
@@ -99,15 +101,16 @@ export const FormPreview = forwardRef<HTMLDivElement, FormPreviewProps>(({ data 
               </div>
             </td>
           </tr>
-          {[
-            ['Aadhaar No. (Optional)', data.aadhaarNo],
-            ['Mobile No.', data.mobileNo],
-          ].map(([label, value], i) => (
-            <tr key={i} className="h-8">
-              <td className="border border-black px-3 align-middle text-left">{label}</td>
-              <td className="border border-black px-3 text-[13px] align-middle text-left">{value}</td>
-            </tr>
-          ))}
+          <tr className="h-8">
+            <td className="border border-black px-3 align-middle text-left">Aadhaar No. (Optional)</td>
+            <td className="border border-black px-3 text-[13px] align-middle text-left tracking-widest">
+              {data.aadhaarNo.replace(/(\d{4})(?=\d)/g, '$1 ')}
+            </td>
+          </tr>
+          <tr className="h-8">
+            <td className="border border-black px-3 align-middle text-left">Mobile No.</td>
+            <td className="border border-black px-3 text-[13px] align-middle text-left">{data.mobileNo}</td>
+          </tr>
         </tbody>
       </table>
 
@@ -213,11 +216,8 @@ export const FormPreview = forwardRef<HTMLDivElement, FormPreviewProps>(({ data 
         </tbody>
       </table>
 
-      {/* Declarations (Numbered exactly as PDF) */}
-      <div className="space-y-1.5 text-justify leading-[1.2] text-[11.5px] normal-case">
-        <p>(i) The elector mentioned above, being myself/my family member, has not acquired the citizenship of any other country.</p>
-        <p>(ii) I am applying for inclusion in the Electoral Roll, and the name mentioned above, being myself/ my family member, is not included in any other Assembly Constituency/ Parliamentary Constituency.</p>
-        <p>(iii) I am aware that making the above statement or declaration in relation to this application which is false and which I know or believe to be false or do not believe to be true, is punishable under Section 31 of Representation of the People Act,1950 (43 of 1950) with imprisonment for a term which may extend to one year or with fine or with both.</p>
+      {/* Declarations — pushed to page bottom */}
+      <div className="mt-auto space-y-1.5 text-justify leading-[1.2] text-[11.5px] normal-case">
 
         <div className="flex flex-col items-end pt-2 font-bold uppercase tracking-tight text-right space-y-0.5">
           <p>Signature/Left Thumb Impression of Elector or</p>

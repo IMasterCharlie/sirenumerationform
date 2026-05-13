@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FormData } from '@/src/types';
 import { FormInput } from './FormInput';
-import { User, CreditCard, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { User, CreditCard, CheckCircle2, ChevronRight, ChevronLeft, IdCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface FormBuilderProps {
@@ -13,7 +13,7 @@ interface FormBuilderProps {
 export const FormBuilder = ({ data, onChange, onPreview }: FormBuilderProps) => {
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const updateField = (field: keyof FormData) => (value: string) => {
     onChange({ [field]: value });
@@ -31,20 +31,26 @@ export const FormBuilder = ({ data, onChange, onPreview }: FormBuilderProps) => 
   const validateStep = (s: number): boolean => {
     switch (s) {
       case 1:
+        if (!data.electorName || !data.epicNumber || !data.acNo || !data.partNo || !data.srNo) {
+          setError('Please fill all Elector Identification fields.');
+          return false;
+        }
+        return true;
+      case 2:
         if (!data.dob || !data.mobileNo || !data.fatherName || !data.address) {
           setError('Please fill all required fields in Section A.');
           return false;
         }
         return true;
-      case 2:
-        return true; // Section B is optional by itself, but checked at Step 3
       case 3:
+        return true; // Section B is optional by itself, but checked at Step 4
+      case 4:
         if (!isBSectionFilled() && !isCSectionFilled()) {
           setError('Please provide details in either Section B (Elector) or Section C (Relative).');
           return false;
         }
         return true;
-      case 4:
+      case 5:
         if (!data.electorSignatureName || !data.electorRelationship || !data.date) {
           setError('Please complete the signature section.');
           return false;
@@ -103,20 +109,15 @@ export const FormBuilder = ({ data, onChange, onPreview }: FormBuilderProps) => 
           >
             <section className="space-y-6 bg-natural-card p-6 rounded-md border border-natural-border shadow-sm">
               <div className="flex items-center gap-2 pb-3 border-b border-natural-border">
-                <User className="w-4 h-4 text-natural-accent" />
-                <h3 className="text-xs font-bold uppercase tracking-widest text-natural-text">Personal Details (Section A)</h3>
+                <IdCard className="w-4 h-4 text-natural-accent" />
+                <h3 className="text-xs font-bold uppercase tracking-widest text-natural-text">Elector Identification</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-                <FormInput label="Address" placeholder="ENTER FULL ADDRESS" value={data.address} onValueChange={updateField('address')} required />
-                <FormInput label="Date of Birth" type="date" value={data.dob} onValueChange={updateField('dob')} required />
-                <FormInput label="Aadhaar No. (Optional)" placeholder="ENTER 12 DIGIT AADHAAR" value={data.aadhaarNo} onValueChange={updateField('aadhaarNo')} maxLength={12} />
-                <FormInput label="Mobile No." placeholder="ENTER 10 DIGIT MOBILE NO" value={data.mobileNo} onValueChange={updateField('mobileNo')} maxLength={10} required />
-                <FormInput label="Father’s/Guardian’s Name" placeholder="ENTER FULL NAME" value={data.fatherName} onValueChange={updateField('fatherName')} required />
-                <FormInput label="Father’s/Guardian’s EPIC No." placeholder="ENTER EPIC NUMBER" value={data.fatherEpic} onValueChange={updateField('fatherEpic')} />
-                <FormInput label="Mother’s Name" placeholder="ENTER FULL NAME" value={data.motherName} onValueChange={updateField('motherName')} />
-                <FormInput label="Mother’s EPIC No." placeholder="ENTER EPIC NUMBER" value={data.motherEpic} onValueChange={updateField('motherEpic')} />
-                <FormInput label="Spouse’s Name" placeholder="ENTER FULL NAME" value={data.spouseName} onValueChange={updateField('spouseName')} />
-                <FormInput label="Spouse’s EPIC No." placeholder="ENTER EPIC NUMBER" value={data.spouseEpic} onValueChange={updateField('spouseEpic')} />
+                <FormInput label="Elector's Name" placeholder="ENTER ELECTOR'S FULL NAME" value={data.electorName} onValueChange={updateField('electorName')} required />
+                <FormInput label="EPIC Number" placeholder="ENTER EPIC NUMBER" value={data.epicNumber} onValueChange={updateField('epicNumber')} required />
+                <FormInput label="AC No." placeholder="ASSEMBLY CONSTITUENCY NO" value={data.acNo} onValueChange={updateField('acNo')} required />
+                <FormInput label="Part No." placeholder="PART NUMBER" value={data.partNo} onValueChange={updateField('partNo')} required />
+                <FormInput label="Sr No." placeholder="SERIAL NUMBER" value={data.srNo} onValueChange={updateField('srNo')} required />
               </div>
             </section>
           </motion.div>
@@ -125,6 +126,35 @@ export const FormBuilder = ({ data, onChange, onPreview }: FormBuilderProps) => 
         return (
           <motion.div 
             key="step2"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-8"
+          >
+            <section className="space-y-6 bg-natural-card p-6 rounded-md border border-natural-border shadow-sm">
+              <div className="flex items-center gap-2 pb-3 border-b border-natural-border">
+                <User className="w-4 h-4 text-natural-accent" />
+                <h3 className="text-xs font-bold uppercase tracking-widest text-natural-text">Personal Details (Section A)</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                <FormInput label="Address" placeholder="ENTER FULL ADDRESS" value={data.address} onValueChange={updateField('address')} required />
+                <FormInput label="Date of Birth" type="date" value={data.dob} onValueChange={updateField('dob')} required />
+                <FormInput label="Aadhaar No. (Optional)" placeholder="ENTER 12 DIGIT AADHAAR" value={data.aadhaarNo} onValueChange={updateField('aadhaarNo')} maxLength={12} />
+                <FormInput label="Mobile No." placeholder="ENTER 10 DIGIT MOBILE NO" value={data.mobileNo} onValueChange={updateField('mobileNo')} maxLength={10} required />
+                <FormInput label="Father's/Guardian's Name" placeholder="ENTER FULL NAME" value={data.fatherName} onValueChange={updateField('fatherName')} required />
+                <FormInput label="Father's/Guardian's EPIC No." placeholder="ENTER EPIC NUMBER" value={data.fatherEpic} onValueChange={updateField('fatherEpic')} />
+                <FormInput label="Mother's Name" placeholder="ENTER FULL NAME" value={data.motherName} onValueChange={updateField('motherName')} />
+                <FormInput label="Mother's EPIC No." placeholder="ENTER EPIC NUMBER" value={data.motherEpic} onValueChange={updateField('motherEpic')} />
+                <FormInput label="Spouse's Name" placeholder="ENTER FULL NAME" value={data.spouseName} onValueChange={updateField('spouseName')} />
+                <FormInput label="Spouse's EPIC No." placeholder="ENTER EPIC NUMBER" value={data.spouseEpic} onValueChange={updateField('spouseEpic')} />
+              </div>
+            </section>
+          </motion.div>
+        );
+      case 3:
+        return (
+          <motion.div 
+            key="step3"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -153,10 +183,10 @@ export const FormBuilder = ({ data, onChange, onPreview }: FormBuilderProps) => 
             </div>
           </motion.div>
         );
-      case 3:
+      case 4:
         return (
           <motion.div 
-            key="step3"
+            key="step4"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -185,10 +215,10 @@ export const FormBuilder = ({ data, onChange, onPreview }: FormBuilderProps) => 
             </div>
           </motion.div>
         );
-      case 4:
+      case 5:
         return (
           <motion.div 
-            key="step4"
+            key="step5"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -216,10 +246,11 @@ export const FormBuilder = ({ data, onChange, onPreview }: FormBuilderProps) => 
   };
 
   const steps = [
-    { id: 1, label: 'General' },
-    { id: 2, label: 'Elector' },
-    { id: 3, label: 'Relative' },
-    { id: 4, label: 'Finish' },
+    { id: 1, label: 'ID' },
+    { id: 2, label: 'General' },
+    { id: 3, label: 'Elector' },
+    { id: 4, label: 'Relative' },
+    { id: 5, label: 'Finish' },
   ];
 
   return (
